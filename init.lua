@@ -177,3 +177,7 @@ vim.api.nvim_create_autocmd("BufWritePre", {
 })
 
 
+-- Editor configs
+vim.opt.number         = true  -- absolute number on cursor line
+vim.opt.relativenumber = true  -- relative numbers elsewhere
+
