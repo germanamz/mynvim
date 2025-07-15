@@ -224,3 +224,7 @@ opt.smartindent = true       -- smart auto‑indent
 opt.number         = true  -- absolute number on cursor line
 opt.relativenumber = true  -- relative numbers elsewhere
 
+-- Indent / dedent with Tab in visual mode
+vim.keymap.set("v", "<Tab>",   ">gv")
+vim.keymap.set("v", "<S-Tab>", "<gv")
+
