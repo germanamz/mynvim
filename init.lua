@@ -59,7 +59,7 @@ require("lazy").setup({
           selection_caret = " ", -- nerd-font icon
           mappings = {            -- a couple of handy defaults
             i = { ["<C-k>"] = actions.move_selection_previous,
-                  ["<C-j>"] = actions.move_selection_next },
+              ["<C-j>"] = actions.move_selection_next },
           },
         },
         extensions = {
@@ -83,16 +83,16 @@ require("lazy").setup({
 
 require("nvim-treesitter.configs").setup({
   ensure_installed = {
-		"javascript",
-		"typescript",
-		"rust",
-		"c",
-		"cpp",
-		"python",
-		"zig",
-		"lua",
-		"vimdoc"
-	},
+    "javascript",
+    "typescript",
+    "rust",
+    "c",
+    "cpp",
+    "python",
+    "zig",
+    "lua",
+    "vimdoc"
+  },
   highlight = { enable = true },
   incremental_selection = { enable = true },
   indent = { enable = true },
@@ -154,28 +154,28 @@ lsp.ts_ls.setup {
 
 -- If eslint present, use eslint
 lsp.eslint.setup{
-   root_dir = function(fname)
-     return util.root_pattern(
-       ".eslintrc*", "eslint.config.*"
-     )(fname)
-   end,
-   on_attach = on_attach,
-   capabilities = capabilities,
- }
+  root_dir = function(fname)
+    return util.root_pattern(
+      ".eslintrc*", "eslint.config.*"
+    )(fname)
+  end,
+  on_attach = on_attach,
+  capabilities = capabilities,
+}
 
 -- Use oxlint if no eslint present
 lsp.oxlint.setup{
-   root_dir = function(fname)
-     -- If we find any ESLint config in the tree, bail out – ESLint will handle it
-     if util.root_pattern(".eslintrc*", "eslint.config.*")(fname) then
-       return nil
-     end
-     -- Otherwise use the first folder with package.json / git / oxlint config as root
-     return util.root_pattern(".oxlintrc.json", ".git", "package.json")(fname)
-   end,
-   on_attach = on_attach,
-   capabilities = capabilities,
- }
+  root_dir = function(fname)
+    -- If we find any ESLint config in the tree, bail out – ESLint will handle it
+    if util.root_pattern(".eslintrc*", "eslint.config.*")(fname) then
+      return nil
+    end
+    -- Otherwise use the first folder with package.json / git / oxlint config as root
+    return util.root_pattern(".oxlintrc.json", ".git", "package.json")(fname)
+  end,
+  on_attach = on_attach,
+  capabilities = capabilities,
+}
 
 -- nvim-cmp: autocompletion
 local cmp = require("cmp")
@@ -227,4 +227,15 @@ opt.relativenumber = true  -- relative numbers elsewhere
 -- Indent / dedent with Tab in visual mode
 vim.keymap.set("v", "<Tab>",   ">gv")
 vim.keymap.set("v", "<S-Tab>", "<gv")
+
+-- Whitespaces
+vim.opt.list = true
+vim.opt.listchars = {
+  tab      = '»·',
+  trail    = '·',
+  extends  = '>',
+  precedes = '<',
+  nbsp     = '␣',
+  space    = '·',
+}
 
