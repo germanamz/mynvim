@@ -215,6 +215,12 @@ vim.api.nvim_create_autocmd("BufWritePre", {
 
 
 -- Editor configs
-vim.opt.number         = true  -- absolute number on cursor line
-vim.opt.relativenumber = true  -- relative numbers elsewhere
+local opt = vim.opt         -- short alias
+opt.tabstop     = 2          -- 1 tab == 2 columns
+opt.shiftwidth  = 2          -- << and >> shift by 2
+opt.softtabstop = 2          -- <Tab>/<BS> count as 2
+opt.expandtab   = true       -- use spaces instead of <Tab>
+opt.smartindent = true       -- smart auto‑indent
+opt.number         = true  -- absolute number on cursor line
+opt.relativenumber = true  -- relative numbers elsewhere
 
