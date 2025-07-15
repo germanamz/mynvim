@@ -42,6 +42,43 @@ require("lazy").setup({
   { "nvim-lualine/lualine.nvim", opts = { theme = "auto" } },
   { "nvim-telescope/telescope.nvim" },
   { "ckipp01/stylua-nvim" },
+  { "nvim-lua/plenary.nvim" },
+  {
+    "nvim-telescope/telescope.nvim",
+    dependencies = {           -- optional but common extras
+      { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
+      { "nvim-telescope/telescope-file-browser.nvim" },
+    },
+    config = function()
+      local telescope = require("telescope")
+      local actions = require("telescope.actions")
+
+      telescope.setup({
+        defaults = {
+          prompt_prefix = "🔭 ",
+          selection_caret = " ", -- nerd-font icon
+          mappings = {            -- a couple of handy defaults
+            i = { ["<C-k>"] = actions.move_selection_previous,
+                  ["<C-j>"] = actions.move_selection_next },
+          },
+        },
+        extensions = {
+          file_browser = { hijack_netrw = true },
+        },
+      })
+
+      -- Optional: load extensions only if they’re present
+      pcall(telescope.load_extension, "fzf")
+      pcall(telescope.load_extension, "file_browser")
+    end,
+    keys = {                     -- lazy.nvim “lazy‑load” on these mappings
+      { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find files" },
+      { "<leader>fg", "<cmd>Telescope live_grep<cr>",  desc = "Live grep" },
+      { "<leader>fb", "<cmd>Telescope buffers<cr>",    desc = "Buffers" },
+      { "<leader>fh", "<cmd>Telescope help_tags<cr>",  desc = "Help tags" },
+      { "<leader>fe", "<cmd>Telescope file_browser<cr>", desc = "File browser" },
+    },
+  },
 })
 
 require("nvim-treesitter.configs").setup({
