@@ -11,16 +11,10 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
   { "nvim-lua/plenary.nvim" },
-
-  -- 1️⃣  Treesitter (fast, accurate syntax & text‑objects)
   { "nvim-treesitter/nvim-treesitter", build = ":TSUpdate" },
-
-  -- 2️⃣  LSP + server installer
   { "williamboman/mason.nvim",          config = true },
   { "williamboman/mason-lspconfig.nvim" },
   { "neovim/nvim-lspconfig" },
-
-  -- 3️⃣  Completion engine
   { "hrsh7th/nvim-cmp",
     dependencies = {
       "hrsh7th/cmp-nvim-lsp",
@@ -28,17 +22,11 @@ require("lazy").setup({
       "L3MON4D3/LuaSnip"
     }
   },
-
-  -- 4️⃣  Formatting / linting
   { "stevearc/conform.nvim" },      -- simple formatter bridge
   { "mfussenegger/nvim-lint" },     -- lightweight linter bridge
-
-  -- 5️⃣  (Optional) Debug Adapter Protocol
   { "mfussenegger/nvim-dap" },
   { "rcarriga/nvim-dap-ui", opts = {} },
-
   { "nvim-neotest/nvim-nio" },
-
   { "nvim-lualine/lualine.nvim", opts = { theme = "auto" } },
   { "nvim-telescope/telescope.nvim" },
   { "ckipp01/stylua-nvim" },
@@ -67,7 +55,6 @@ require("lazy").setup({
         },
       })
 
-      -- Optional: load extensions only if they’re present
       pcall(telescope.load_extension, "fzf")
       pcall(telescope.load_extension, "file_browser")
     end,
@@ -86,6 +73,15 @@ require("lazy").setup({
       "build",
     },
   },
+
+  {
+    "numToStr/Comment.nvim",
+    opts = {},         -- put plugin options here if you want
+    lazy = false,      -- load on startup so the mappings are ready
+    config = function()
+      require("Comment").setup()
+    end,
+  }
 })
 
 require("nvim-treesitter.configs").setup({
@@ -349,3 +345,23 @@ vim.opt.listchars = {
   space    = '·',
 }
 
+-- Title
+local utilPath = require("util.path")
+vim.o.title = true
+vim.api.nvim_create_autocmd({"BufEnter", "DirChanged"}, {
+  callback = function()
+    local bpath = vim.api.nvim_buf_get_name(0)
+    local wname = pkgmgr.workspace_root(bpath)
+
+    -- if bpath == '' then
+    --   return vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
+    -- end
+
+
+    vim.o.titlestring = string.format(
+      "nvim: %s - %s",
+      vim.fn.fnamemodify(wname, ":t"),
+      utilPath.relative(bpath, wname)
+    )
+  end,
+})
