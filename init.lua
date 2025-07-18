@@ -106,23 +106,19 @@ require("nvim-treesitter.configs").setup({
   indent = { enable = true },
 })
 
+local lsp_list = {
+  "ts_ls",
+  "eslint",
+  "oxlint",
+  "rust_analyzer",
+  "clangd",
+  "pyright",
+  "zls",
+}
 
 require("mason").setup()
 require("mason-lspconfig").setup({
-  ensure_installed = {
-    -- JS / TS
-    "ts_ls",
-    "eslint",
-    "oxlint",
-    -- Rust
-    "rust_analyzer",
-    -- C / C++
-    "clangd",
-    -- Python
-    "pyright",              -- or "ruff_lsp" for Ruff‑first
-    -- Zig
-    "zls",
-  },
+  ensure_installed = lsp_list,
   automatic_installation = true,
 })
 
@@ -142,7 +138,7 @@ end
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
 -- loop through servers
-for _,srv in ipairs({"ts_ls","eslint","oxlint","rust_analyzer","clangd","pyright","zls"}) do
+for _,srv in ipairs(lsp_list) do
   lsp[srv].setup{ on_attach = on_attach, capabilities = capabilities }
 end
 
