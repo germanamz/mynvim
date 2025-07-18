@@ -238,6 +238,31 @@ lsp.oxlint.setup {
   end,
 }
 
+-- lualine goodies
+require("lualine").setup({
+  sections = {
+    lualine_c = {
+      {
+        -- Root folder component
+        function()
+          local bufname = vim.api.nvim_buf_get_name(0)
+          if bufname == '' then
+            return vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
+          end
+            return vim.fn.fnamemodify(pkgmgr.workspace_root(bufname), ":t")
+        end,
+        icon = "",          -- Nerd‑font folder icon (optional)
+        padding = { left = 1, right = 1 },
+      },
+      {
+        "filename",             -- Keep your usual filename component
+        path = 1,
+      }
+    },
+    -- leave the rest of your lualine config unchanged
+  },
+})
+
 -- nvim-cmp: autocompletion
 local cmp = require("cmp")
 cmp.setup({
