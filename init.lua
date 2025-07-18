@@ -78,6 +78,13 @@ require("lazy").setup({
       { "<leader>fh", "<cmd>Telescope help_tags<cr>",  desc = "Help tags" },
       { "<leader>fe", "<cmd>Telescope file_browser<cr>", desc = "File browser" },
     },
+    file_ignore_patterns = {
+      "node_modules",
+      "%.pnpm",
+      "%.turbo",
+      "dist",
+      "build",
+    },
   },
 })
 
@@ -124,6 +131,7 @@ require("mason-lspconfig").setup({
 
 
 -- LSPConfiguration
+local pnpm = require("pnpm") -- A custom script in ./lua folder
 local lsp = require("lspconfig")
 local util = require("lspconfig.util")
 local on_attach = function(_, bufnr)
@@ -148,37 +156,86 @@ lsp.rust_analyzer.setup{
 }
 
 -- TS/JS specific goodies
-lsp.ts_ls.setup {
+lsp.ts_ls.setup{
   on_attach = function(client, bufnr)
-    -- Disable lsp formatting in favor of linters
+    -- Prefer local bin PATH injection (optional, helps tsserver resolve plugins)
+    pnpm.add_package_bin_to_path(vim.api.nvim_buf_get_name(bufnr))
+
+    -- Disable tsserver formatting in favor of Prettier/ESLint
     client.server_capabilities.documentFormattingProvider = false
     on_attach(client, bufnr)
+  end,
+  capabilities = capabilities,
+  root_dir = function(fname)
+    -- Use nearest package w/ tsconfig or package.json; fallback to pnpm workspace; fallback to git.
+    return pnpm.package_root(fname)
+        or pnpm.workspace_root(fname)
+        or util.find_git_ancestor(fname)
   end,
 }
 
 -- If eslint present, use eslint
-lsp.eslint.setup{
-  root_dir = function(fname)
-    return util.root_pattern(
-      ".eslintrc*", "eslint.config.*"
-    )(fname)
+lsp.eslint.setup {
+  on_attach = function(client, bufnr)
+    pnpm.add_package_bin_to_path(vim.api.nvim_buf_get_name(bufnr))
+    on_attach(client, bufnr)
   end,
-  on_attach = on_attach,
   capabilities = capabilities,
+  -- cmd = { pnpm.prefer_local("vscode-eslint-language-server"), "--stdio" },
+  root_dir = function(fname)
+    -- If you have a central ESLint config at workspace root, this will find it.
+    -- Otherwise it will stop at the package config.
+    return util.root_pattern(
+      -- ESLint config files
+      ".eslintrc",
+      ".eslintrc.js",
+      ".eslintrc.cjs",
+      ".eslintrc.json",
+      ".eslintrc.yaml",
+      ".eslintrc.yml",
+      "eslint.config.js",
+      "eslint.config.mjs",
+      "eslint.config.cjs",
+      "eslint.config.ts",
+      "eslint.config.mts",
+      "eslint.config.cts"
+    )(fname)
+    or pnpm.package_root(fname)
+    or pnpm.workspace_root(fname)
+  end,
 }
 
 -- Use oxlint if no eslint present
-lsp.oxlint.setup{
+lsp.oxlint.setup {
+  on_attach = function(client, bufnr)
+    pnpm.add_package_bin_to_path(vim.api.nvim_buf_get_name(bufnr))
+    on_attach(client, bufnr)
+  end,
+  capabilities = capabilities,
+  -- cmd = { pnpm.prefer_local("oxlint-language-server") },
   root_dir = function(fname)
-    -- If we find any ESLint config in the tree, bail out – ESLint will handle it
-    if util.root_pattern(".eslintrc*", "eslint.config.*")(fname) then
+    -- Skip if ESLint config exists anywhere above.
+    if util.root_pattern(
+      ".eslintrc",
+      ".eslintrc.js",
+      ".eslintrc.cjs",
+      ".eslintrc.json",
+      ".eslintrc.yaml",
+      ".eslintrc.yml",
+      "eslint.config.js",
+      "eslint.config.mjs",
+      "eslint.config.cjs",
+      "eslint.config.ts",
+      "eslint.config.mts",
+      "eslint.config.cts"
+    )(fname) then
       return nil
     end
-    -- Otherwise use the first folder with package.json / git / oxlint config as root
-    return util.root_pattern(".oxlintrc.json", ".git", "package.json")(fname)
+    -- Otherwise pick package root, then workspace.
+    return pnpm.package_root(fname)
+        or pnpm.workspace_root(fname)
+        or util.find_git_ancestor(fname)
   end,
-  on_attach = on_attach,
-  capabilities = capabilities,
 }
 
 -- nvim-cmp: autocompletion
@@ -201,14 +258,38 @@ cmp.setup({
 
 -- Formatting and Linting
 require("conform").setup({
+  notify_on_error = false,
   formatters_by_ft = {
-    javascript = { "prettierd", "eslint_d" },
-    typescript = { "prettierd", "eslint_d" },
+    javascript = { "prettier_or_prettierd", "eslint_d_fix" },
+    typescript = { "prettier_or_prettierd", "eslint_d_fix" },
+    javascriptreact = { "prettier_or_prettierd", "eslint_d_fix" },
+    typescriptreact = { "prettier_or_prettierd", "eslint_d_fix" },
+    -- keep your others:
     rust       = { "rustfmt" },
     c          = { "clang_format" },
     cpp        = { "clang_format" },
     python     = { "black", "isort" },
     zig        = { "zigfmt" },
+  },
+  formatters = {
+    prettier_or_prettierd = {
+      command = function(ctx)
+        -- try prettierd, then prettier
+        local p = pnpm.prefer_local("prettierd", ctx.filename)
+        if vim.fn.executable(p) == 1 then return p end
+        return pnpm.prefer_local("prettier", ctx.filename)
+      end,
+      args = { "--stdin-filepath", "$FILENAME" },
+      stdin = true,
+    },
+    eslint_d_fix = {
+      command = function(ctx)
+        return pnpm.prefer_local("eslint_d", ctx.filename)
+      end,
+      args = { "--fix-to-stdout", "--stdin", "--stdin-filename", "$FILENAME" },
+      stdin = true,
+      exit_codes = { 0, 1 }, -- ESLint returns 1 when it finds problems
+    },
   },
 })
 -- auto‑format on save
