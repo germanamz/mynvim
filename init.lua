@@ -131,7 +131,7 @@ require("mason-lspconfig").setup({
 
 
 -- LSPConfiguration
-local pnpm = require("pnpm") -- A custom script in ./lua folder
+local pkgmgr = require("pkgmgr") -- A custom script in ./lua folder
 local lsp = require("lspconfig")
 local util = require("lspconfig.util")
 local on_attach = function(_, bufnr)
@@ -159,7 +159,7 @@ lsp.rust_analyzer.setup{
 lsp.ts_ls.setup{
   on_attach = function(client, bufnr)
     -- Prefer local bin PATH injection (optional, helps tsserver resolve plugins)
-    pnpm.add_package_bin_to_path(vim.api.nvim_buf_get_name(bufnr))
+    pkgmgr.add_package_bin_to_path(vim.api.nvim_buf_get_name(bufnr))
 
     -- Disable tsserver formatting in favor of Prettier/ESLint
     client.server_capabilities.documentFormattingProvider = false
@@ -167,9 +167,9 @@ lsp.ts_ls.setup{
   end,
   capabilities = capabilities,
   root_dir = function(fname)
-    -- Use nearest package w/ tsconfig or package.json; fallback to pnpm workspace; fallback to git.
-    return pnpm.package_root(fname)
-        or pnpm.workspace_root(fname)
+    -- Use nearest package w/ tsconfig or package.json; fallback to pkgmgr workspace; fallback to git.
+    return pkgmgr.package_root(fname)
+        or pkgmgr.workspace_root(fname)
         or util.find_git_ancestor(fname)
   end,
 }
@@ -177,11 +177,11 @@ lsp.ts_ls.setup{
 -- If eslint present, use eslint
 lsp.eslint.setup {
   on_attach = function(client, bufnr)
-    pnpm.add_package_bin_to_path(vim.api.nvim_buf_get_name(bufnr))
+    pkgmgr.add_package_bin_to_path(vim.api.nvim_buf_get_name(bufnr))
     on_attach(client, bufnr)
   end,
   capabilities = capabilities,
-  -- cmd = { pnpm.prefer_local("vscode-eslint-language-server"), "--stdio" },
+  -- cmd = { pkgmgr.prefer_local("vscode-eslint-language-server"), "--stdio" },
   root_dir = function(fname)
     -- If you have a central ESLint config at workspace root, this will find it.
     -- Otherwise it will stop at the package config.
@@ -200,19 +200,19 @@ lsp.eslint.setup {
       "eslint.config.mts",
       "eslint.config.cts"
     )(fname)
-    or pnpm.package_root(fname)
-    or pnpm.workspace_root(fname)
+    or pkgmgr.package_root(fname)
+    or pkgmgr.workspace_root(fname)
   end,
 }
 
 -- Use oxlint if no eslint present
 lsp.oxlint.setup {
   on_attach = function(client, bufnr)
-    pnpm.add_package_bin_to_path(vim.api.nvim_buf_get_name(bufnr))
+    pkgmgr.add_package_bin_to_path(vim.api.nvim_buf_get_name(bufnr))
     on_attach(client, bufnr)
   end,
   capabilities = capabilities,
-  -- cmd = { pnpm.prefer_local("oxlint-language-server") },
+  -- cmd = { pkgmgr.prefer_local("oxlint-language-server") },
   root_dir = function(fname)
     -- Skip if ESLint config exists anywhere above.
     if util.root_pattern(
@@ -232,8 +232,8 @@ lsp.oxlint.setup {
       return nil
     end
     -- Otherwise pick package root, then workspace.
-    return pnpm.package_root(fname)
-        or pnpm.workspace_root(fname)
+    return pkgmgr.package_root(fname)
+        or pkgmgr.workspace_root(fname)
         or util.find_git_ancestor(fname)
   end,
 }
@@ -275,16 +275,16 @@ require("conform").setup({
     prettier_or_prettierd = {
       command = function(ctx)
         -- try prettierd, then prettier
-        local p = pnpm.prefer_local("prettierd", ctx.filename)
+        local p = pkgmgr.prefer_local("prettierd", ctx.filename)
         if vim.fn.executable(p) == 1 then return p end
-        return pnpm.prefer_local("prettier", ctx.filename)
+        return pkgmgr.prefer_local("prettier", ctx.filename)
       end,
       args = { "--stdin-filepath", "$FILENAME" },
       stdin = true,
     },
     eslint_d_fix = {
       command = function(ctx)
-        return pnpm.prefer_local("eslint_d", ctx.filename)
+        return pkgmgr.prefer_local("eslint_d", ctx.filename)
       end,
       args = { "--fix-to-stdout", "--stdin", "--stdin-filename", "$FILENAME" },
       stdin = true,

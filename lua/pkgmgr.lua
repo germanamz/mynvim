@@ -1,4 +1,4 @@
--- lua/pnpm.lua
+-- lua/pkgmgr.lua
 local M = {}
 
 local util = require("lspconfig.util")
@@ -6,8 +6,18 @@ local uv = vim.loop
 
 -- Files that identify the *workspace* root
 M.workspace_root_patterns = {
+  -- pnpm
   "pnpm-workspace.yaml",
-  "pnpm-lock.yaml",
+  -- npm
+  "package-lock.json",
+  "npm-shrinkwrap.json",
+  -- Yarn classic & Berry
+  "yarn.lock",
+  ".pnp.cjs",           -- Yarn Plug'n'Play :contentReference[oaicite:0]{index=0}
+  -- Bun
+  "bun.lock",
+  "bun.lockb",          -- text vs. binary lockfiles :contentReference[oaicite:1]{index=1}
+  -- always
   ".git",
 }
 
