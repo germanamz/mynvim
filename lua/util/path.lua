@@ -5,13 +5,21 @@ local M = {}
 ---@param base string absolute directory path (reference)
 ---@return string
 function M.relative(path, base)
-  base = base:gsub('[\\/]+$', '')          -- trim trailing slash
+  path = path or ""
+  base = base or ""
+
+  base = base:gsub('[\\/]+$', '')
+
   local norm = function(p) return p:gsub('[\\/]+', '/') end
-  path, base = norm(path), norm(base)
+
+  path = norm(path)
+  base = norm(base)
+
   if path:sub(1, #base + 1) == base .. '/' then
-    return path:sub(#base + 2)             -- cut "base/"
+    return path:sub(#base + 2)
   end
-  return path                              -- outside base → keep absolute
+
+  return path
 end
 
 return M

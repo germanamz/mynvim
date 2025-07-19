@@ -17,6 +17,8 @@ M.workspace_root_patterns = {
   -- Bun
   "bun.lock",
   "bun.lockb",          -- text vs. binary lockfiles :contentReference[oaicite:1]{index=1}
+  -- c/cpp (lowlvl)
+  "Makefile",
   -- always
   ".git",
 }

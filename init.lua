@@ -28,7 +28,6 @@ require("lazy").setup({
   { "rcarriga/nvim-dap-ui", opts = {} },
   { "nvim-neotest/nvim-nio" },
   { "nvim-lualine/lualine.nvim", opts = { theme = "auto" } },
-  { "nvim-telescope/telescope.nvim" },
   { "ckipp01/stylua-nvim" },
   { "nvim-lua/plenary.nvim" },
   {
@@ -49,6 +48,14 @@ require("lazy").setup({
             i = { ["<C-k>"] = actions.move_selection_previous,
               ["<C-j>"] = actions.move_selection_next },
           },
+          file_ignore_patterns = {
+            "node_modules",
+            "%.pnpm",
+            "%.turbo",
+            "dist",
+            "build",
+            "^cmake%-build%-debug/",
+          },
         },
         extensions = {
           file_browser = { hijack_netrw = true },
@@ -65,22 +72,11 @@ require("lazy").setup({
       { "<leader>fh", "<cmd>Telescope help_tags<cr>",  desc = "Help tags" },
       { "<leader>fe", "<cmd>Telescope file_browser<cr>", desc = "File browser" },
     },
-    file_ignore_patterns = {
-      "node_modules",
-      "%.pnpm",
-      "%.turbo",
-      "dist",
-      "build",
-    },
   },
 
   {
     "numToStr/Comment.nvim",
     opts = {},
-    lazy = false,
-    config = function()
-      require("Comment").setup()
-    end,
   }
 })
 
@@ -340,7 +336,7 @@ opt.softtabstop = 2          -- <Tab>/<BS> count as 2
 opt.expandtab   = true       -- use spaces instead of <Tab>
 opt.smartindent = true       -- smart auto‑indent
 opt.number         = true  -- absolute number on cursor line
-opt.relativenumber = true  -- relative numbers elsewhere
+-- opt.relativenumber = true  -- relative numbers elsewhere
 
 -- Indent / dedent with Tab in visual mode
 vim.keymap.set("v", "<Tab>",   ">gv")
@@ -363,12 +359,16 @@ vim.o.title = true
 vim.api.nvim_create_autocmd({"BufEnter", "DirChanged"}, {
   callback = function()
     local bpath = vim.api.nvim_buf_get_name(0)
-    local wname = pkgmgr.workspace_root(bpath)
+    local wpath = pkgmgr.workspace_root(bpath)
+
+    if wpath == nil then
+      wpath = vim.fn.getcwd()
+    end
 
     vim.o.titlestring = string.format(
-      "nvim: %s - %s",
-      vim.fn.fnamemodify(wname, ":t"),
-      utilPath.relative(bpath, wname)
+      "Nvim: %s - %s",
+      vim.fn.fnamemodify(wpath, ":t"),
+      utilPath.relative(bpath, wpath)
     )
   end,
 })
