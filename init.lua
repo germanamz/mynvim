@@ -12,7 +12,7 @@ vim.opt.rtp:prepend(lazypath)
 require("lazy").setup({
   { "nvim-lua/plenary.nvim" },
   { "nvim-treesitter/nvim-treesitter", build = ":TSUpdate" },
-  { "williamboman/mason.nvim",          config = true },
+  { "williamboman/mason.nvim", config = true },
   { "williamboman/mason-lspconfig.nvim" },
   { "neovim/nvim-lspconfig" },
   { "hrsh7th/nvim-cmp",
@@ -22,8 +22,8 @@ require("lazy").setup({
       "L3MON4D3/LuaSnip"
     }
   },
-  { "stevearc/conform.nvim" },      -- simple formatter bridge
-  { "mfussenegger/nvim-lint" },     -- lightweight linter bridge
+  { "stevearc/conform.nvim" },
+  { "mfussenegger/nvim-lint" },
   { "mfussenegger/nvim-dap" },
   { "rcarriga/nvim-dap-ui", opts = {} },
   { "nvim-neotest/nvim-nio" },
@@ -33,7 +33,7 @@ require("lazy").setup({
   { "nvim-lua/plenary.nvim" },
   {
     "nvim-telescope/telescope.nvim",
-    dependencies = {           -- optional but common extras
+    dependencies = {
       { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
       { "nvim-telescope/telescope-file-browser.nvim" },
     },
@@ -44,8 +44,8 @@ require("lazy").setup({
       telescope.setup({
         defaults = {
           prompt_prefix = "🔭 ",
-          selection_caret = " ", -- nerd-font icon
-          mappings = {            -- a couple of handy defaults
+          selection_caret = " ",
+          mappings = {
             i = { ["<C-k>"] = actions.move_selection_previous,
               ["<C-j>"] = actions.move_selection_next },
           },
@@ -58,7 +58,7 @@ require("lazy").setup({
       pcall(telescope.load_extension, "fzf")
       pcall(telescope.load_extension, "file_browser")
     end,
-    keys = {                     -- lazy.nvim “lazy‑load” on these mappings
+    keys = {
       { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find files" },
       { "<leader>fg", "<cmd>Telescope live_grep<cr>",  desc = "Live grep" },
       { "<leader>fb", "<cmd>Telescope buffers<cr>",    desc = "Buffers" },
@@ -76,8 +76,8 @@ require("lazy").setup({
 
   {
     "numToStr/Comment.nvim",
-    opts = {},         -- put plugin options here if you want
-    lazy = false,      -- load on startup so the mappings are ready
+    opts = {},
+    lazy = false,
     config = function()
       require("Comment").setup()
     end,
@@ -88,13 +88,21 @@ require("nvim-treesitter.configs").setup({
   ensure_installed = {
     "javascript",
     "typescript",
+    "tsx",
+    "toml",
+    "yaml",
+    "json",
     "rust",
     "c",
     "cpp",
     "python",
     "zig",
     "lua",
-    "vimdoc"
+    "vimdoc",
+    "go",
+    "css",
+    "cmake",
+    "asm"
   },
   highlight = { enable = true },
   incremental_selection = {
@@ -154,30 +162,26 @@ lsp.rust_analyzer.setup{
 -- TS/JS specific goodies
 lsp.ts_ls.setup{
   on_attach = function(client, bufnr)
-    -- Prefer local bin PATH injection (optional, helps tsserver resolve plugins)
     pkgmgr.add_package_bin_to_path(vim.api.nvim_buf_get_name(bufnr))
 
-    -- Disable tsserver formatting in favor of Prettier/ESLint
     client.server_capabilities.documentFormattingProvider = false
     on_attach(client, bufnr)
   end,
   capabilities = capabilities,
   root_dir = function(fname)
-    -- Use nearest package w/ tsconfig or package.json; fallback to pkgmgr workspace; fallback to git.
     return pkgmgr.package_root(fname)
         or pkgmgr.workspace_root(fname)
         or util.find_git_ancestor(fname)
   end,
 }
 
--- If eslint present, use eslint
+-- eslint goodies
 lsp.eslint.setup {
   on_attach = function(client, bufnr)
     pkgmgr.add_package_bin_to_path(vim.api.nvim_buf_get_name(bufnr))
     on_attach(client, bufnr)
   end,
   capabilities = capabilities,
-  -- cmd = { pkgmgr.prefer_local("vscode-eslint-language-server"), "--stdio" },
   root_dir = function(fname)
     -- If you have a central ESLint config at workspace root, this will find it.
     -- Otherwise it will stop at the package config.
@@ -208,7 +212,6 @@ lsp.oxlint.setup {
     on_attach(client, bufnr)
   end,
   capabilities = capabilities,
-  -- cmd = { pkgmgr.prefer_local("oxlint-language-server") },
   root_dir = function(fname)
     -- Skip if ESLint config exists anywhere above.
     if util.root_pattern(
@@ -247,17 +250,26 @@ require("lualine").setup({
           end
             return vim.fn.fnamemodify(pkgmgr.workspace_root(bufname), ":t")
         end,
-        icon = "",          -- Nerd‑font folder icon (optional)
+        icon = "",
         padding = { left = 1, right = 1 },
       },
       {
-        "filename",             -- Keep your usual filename component
+        "filename",
         path = 1,
       }
     },
-    -- leave the rest of your lualine config unchanged
   },
 })
+
+-- Diagnostic
+vim.keymap.set(
+  "n",
+  "<leader>e",
+  vim.diagnostic.open_float,
+  { desc = "Diagnostic: show line message" }
+)
+vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, { desc = "Prev diagnostic" })
+vim.keymap.set("n", "]d", vim.diagnostic.goto_next, { desc = "Next diagnostic" })
 
 -- nvim-cmp: autocompletion
 local cmp = require("cmp")
@@ -352,11 +364,6 @@ vim.api.nvim_create_autocmd({"BufEnter", "DirChanged"}, {
   callback = function()
     local bpath = vim.api.nvim_buf_get_name(0)
     local wname = pkgmgr.workspace_root(bpath)
-
-    -- if bpath == '' then
-    --   return vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
-    -- end
-
 
     vim.o.titlestring = string.format(
       "nvim: %s - %s",
