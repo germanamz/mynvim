@@ -48,14 +48,14 @@ require("lazy").setup({
             i = { ["<C-k>"] = actions.move_selection_previous,
               ["<C-j>"] = actions.move_selection_next },
           },
-          file_ignore_patterns = {
-            "node_modules",
-            "%.pnpm",
-            "%.turbo",
-            "dist",
-            "build",
-            "^cmake%-build%-debug/",
-          },
+          -- file_ignore_patterns = {
+          --   "node_modules",
+          --   "%.pnpm",
+          --   "%.turbo",
+          --   "dist",
+          --   "build",
+          --   "^cmake%-build%-debug/",
+          -- },
         },
         extensions = {
           file_browser = { hijack_netrw = true },
@@ -66,7 +66,23 @@ require("lazy").setup({
       pcall(telescope.load_extension, "file_browser")
     end,
     keys = {
-      { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find files" },
+      {
+        "<leader>ff",
+        function()
+          require("telescope.builtin").git_files({
+            show_untracked = true,
+            use_git_root = true,
+          })
+        end,
+        desc = "Find git files (tracked + untracked)",
+      },
+      {
+        "<leader>ft",
+        function() require("telescope.builtin").git_files() end,
+        desc = "Find git files (tracked only)",
+      },
+      -- { "<leader>ff", "<cmd>Telescope git_files<cr>", desc = "Find only git files" },
+      { "<leader>fa", "<cmd>Telescope find_files<cr>", desc = "Find all files" },
       { "<leader>fg", "<cmd>Telescope live_grep<cr>",  desc = "Live grep" },
       { "<leader>fb", "<cmd>Telescope buffers<cr>",    desc = "Buffers" },
       { "<leader>fh", "<cmd>Telescope help_tags<cr>",  desc = "Help tags" },
