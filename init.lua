@@ -95,6 +95,7 @@ require("lazy").setup({
     opts = {},
   },
   { "hrsh7th/cmp-buffer" },
+  { "folke/neodev.nvim", opts = {} },
 })
 
 require("nvim-treesitter.configs").setup({
@@ -131,6 +132,7 @@ require("nvim-treesitter.configs").setup({
 })
 
 local lsp_list = {
+  "lua_ls",
   "ts_ls",
   "eslint",
   "oxlint",
@@ -151,6 +153,7 @@ require("mason-lspconfig").setup({
 local pkgmgr = require("pkgmgr") -- A custom script in ./lua folder
 local lsp = require("lspconfig")
 local util = require("lspconfig.util")
+local cwd_root = pkgmgr.cwd_root()
 local on_attach = function(_, bufnr)
   local nmap = function(keys, func, desc)
     if desc then desc = "LSP: " .. desc end
@@ -164,8 +167,30 @@ local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
 -- loop through servers
 for _,srv in ipairs(lsp_list) do
-  lsp[srv].setup{ on_attach = on_attach, capabilities = capabilities }
+  lsp[srv].setup{
+    on_attach = on_attach,
+    capabilities = capabilities,
+    root_dir = cwd_root
+  }
 end
+
+-- Lua-specific goodies
+require("neodev").setup({})
+lsp.lua_ls.setup{
+  on_attach = on_attach,
+  capabilities = capabilities,
+  root_dir = cwd_root,
+  settings = {
+    Lua = {
+      workspace = {
+        checkThirdParty = false,
+        library = vim.api.nvim_get_runtime_file("", true),
+      },
+      completion = { callSnippet = "Replace" },
+    },
+  },
+}
+
 
 -- Rust‑specific goodies
 lsp.rust_analyzer.setup{
@@ -173,6 +198,20 @@ lsp.rust_analyzer.setup{
 }
 
 -- Python-specific goodies
+lsp.pyright.setup{
+  on_attach = on_attach,
+  capabilities = capabilities,
+  root_dir = cwd_root,
+  settings = {
+    python = {
+      analysis = {
+        diagnosticMode = "workspace",
+        autoImportCompletions = true,
+        -- extraPaths = { vim.fn.getcwd() .. "/src" }, -- add if you keep code in src/
+      },
+    },
+  },
+}
 
 
 -- TS/JS specific goodies
@@ -184,7 +223,11 @@ lsp.ts_ls.setup{
     on_attach(client, bufnr)
   end,
   capabilities = capabilities,
-  root_dir = pkgmgr.cwd_root(),
+  root_dir = cwd_root,
+  settings = {
+    typescript = { preferences = { includeCompletionsForModuleExports = true } },
+    javascript = { preferences = { includeCompletionsForModuleExports = true } },
+  }
 }
 
 -- eslint goodies
@@ -288,7 +331,12 @@ cmp.setup({
   }),
   sources = {
     { name = "nvim_lsp" },
-    { name = "buffer"   },
+    {
+      name = "buffer",
+      option = {
+        get_bufnrs = function() return vim.api.nvim_list_bufs() end
+      }
+    },
     { name = "path"     },
     { name = "luasnip"  },
   },

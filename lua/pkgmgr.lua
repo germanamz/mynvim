@@ -86,7 +86,7 @@ end
 
 
 function M.workspace_name()
-  return vim.fn.fnamemodify(pkgmgr.cwd_root(bufname), ":t")
+  return vim.fn.fnamemodify(M.cwd_root(), ":t")
 end
 
 
