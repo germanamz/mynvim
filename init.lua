@@ -93,7 +93,8 @@ require("lazy").setup({
   {
     "numToStr/Comment.nvim",
     opts = {},
-  }
+  },
+  { "hrsh7th/cmp-buffer" },
 })
 
 require("nvim-treesitter.configs").setup({
@@ -343,6 +344,26 @@ vim.api.nvim_create_autocmd("BufWritePre", {
   callback = function(args) require("conform").format({ bufnr = args.buf }) end,
 })
 
+-- cmp goodies
+local cmp = require("cmp")
+
+vim.opt.completeopt = { "menu", "menuone", "noselect" }
+
+cmp.setup({
+  snippet = {
+    expand = function(args) require("luasnip").lsp_expand(args.body) end,
+  },
+  mapping = cmp.mapping.preset.insert({
+    ["<C-Space>"] = cmp.mapping.complete(),
+    ["<CR>"]      = cmp.mapping.confirm({ select = true }),
+  }),
+  sources = cmp.config.sources({
+    { name = "nvim_lsp" },
+    { name = "buffer" },
+    { name = "path" },
+    { name = "luasnip" },
+  }),
+})
 
 -- Editor configs
 local opt = vim.opt         -- short alias
