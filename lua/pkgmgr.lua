@@ -11,12 +11,15 @@ M.workspace_root_patterns = {
   -- npm
   "package-lock.json",
   "npm-shrinkwrap.json",
+  -- python
+  "pyproject.toml",
+  ".venv",
   -- Yarn classic & Berry
   "yarn.lock",
-  ".pnp.cjs",           -- Yarn Plug'n'Play :contentReference[oaicite:0]{index=0}
+  ".pnp.cjs",
   -- Bun
   "bun.lock",
-  "bun.lockb",          -- text vs. binary lockfiles :contentReference[oaicite:1]{index=1}
+  "bun.lockb",
   -- c/cpp (lowlvl)
   "Makefile",
   -- always
@@ -42,8 +45,7 @@ function M.workspace_root(fname)
   return util.root_pattern(unpack(M.workspace_root_patterns))(fname)
 end
 
--- Prefer a locally installed executable in the *package* first, then workspace, else fallback.
--- Usage: local exe = M.prefer_local("eslint_d", ctx.filename)  -- gives full path or "eslint_d"
+
 function M.prefer_local(exe, fname)
   fname = fname or vim.api.nvim_buf_get_name(0)
   local pkg = M.package_root(fname)
@@ -63,8 +65,7 @@ function M.prefer_local(exe, fname)
   return exe
 end
 
--- Optionally ensure the chosen package bin dir is prepended to $PATH for spawned jobs
--- (not strictly required if you use absolute paths from prefer_local, but some plugins rely on PATH)
+
 function M.add_package_bin_to_path(fname)
   fname = fname or vim.api.nvim_buf_get_name(0)
   local pkg = M.package_root(fname) or M.workspace_root(fname)
@@ -74,6 +75,20 @@ function M.add_package_bin_to_path(fname)
     vim.env.PATH = bin .. ":" .. vim.env.PATH
   end
 end
+
+
+function M.cwd_root()
+  local cwd = vim.fn.getcwd()
+  return M.workspace_root(cwd)
+    or util.find_git_ancestor(cwd)
+    or cwd
+end
+
+
+function M.workspace_name()
+  return vim.fn.fnamemodify(pkgmgr.cwd_root(bufname), ":t")
+end
+
 
 return M
 

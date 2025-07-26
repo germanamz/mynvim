@@ -172,6 +172,9 @@ lsp.rust_analyzer.setup{
   settings = { ["rust-analyzer"] = { cargo = { allFeatures = true } } }
 }
 
+-- Python-specific goodies
+
+
 -- TS/JS specific goodies
 lsp.ts_ls.setup{
   on_attach = function(client, bufnr)
@@ -181,11 +184,7 @@ lsp.ts_ls.setup{
     on_attach(client, bufnr)
   end,
   capabilities = capabilities,
-  root_dir = function(fname)
-    return pkgmgr.package_root(fname)
-        or pkgmgr.workspace_root(fname)
-        or util.find_git_ancestor(fname)
-  end,
+  root_dir = pkgmgr.cwd_root(),
 }
 
 -- eslint goodies
@@ -213,8 +212,7 @@ lsp.eslint.setup {
       "eslint.config.mts",
       "eslint.config.cts"
     )(fname)
-    or pkgmgr.package_root(fname)
-    or pkgmgr.workspace_root(fname)
+    or pkgmgr.cwd_root()
   end,
 }
 
@@ -244,9 +242,7 @@ lsp.oxlint.setup {
       return nil
     end
     -- Otherwise pick package root, then workspace.
-    return pkgmgr.package_root(fname)
-        or pkgmgr.workspace_root(fname)
-        or util.find_git_ancestor(fname)
+    return pkgmgr.cwd_root()
   end,
 }
 
@@ -255,14 +251,7 @@ require("lualine").setup({
   sections = {
     lualine_c = {
       {
-        -- Root folder component
-        function()
-          local bufname = vim.api.nvim_buf_get_name(0)
-          if bufname == '' then
-            return vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
-          end
-            return vim.fn.fnamemodify(pkgmgr.workspace_root(bufname), ":t")
-        end,
+        pkgmgr.cwd_root(),
         icon = "",
         padding = { left = 1, right = 1 },
       },
@@ -286,6 +275,9 @@ vim.keymap.set("n", "]d", vim.diagnostic.goto_next, { desc = "Next diagnostic" }
 
 -- nvim-cmp: autocompletion
 local cmp = require("cmp")
+
+vim.opt.completeopt = { "menu", "menuone", "noselect" }
+
 cmp.setup({
   snippet = {
     expand = function(args) require("luasnip").lsp_expand(args.body) end,
@@ -296,8 +288,9 @@ cmp.setup({
   }),
   sources = {
     { name = "nvim_lsp" },
-    { name = "luasnip"  },
+    { name = "buffer"   },
     { name = "path"     },
+    { name = "luasnip"  },
   },
 })
 
@@ -344,26 +337,6 @@ vim.api.nvim_create_autocmd("BufWritePre", {
   callback = function(args) require("conform").format({ bufnr = args.buf }) end,
 })
 
--- cmp goodies
-local cmp = require("cmp")
-
-vim.opt.completeopt = { "menu", "menuone", "noselect" }
-
-cmp.setup({
-  snippet = {
-    expand = function(args) require("luasnip").lsp_expand(args.body) end,
-  },
-  mapping = cmp.mapping.preset.insert({
-    ["<C-Space>"] = cmp.mapping.complete(),
-    ["<CR>"]      = cmp.mapping.confirm({ select = true }),
-  }),
-  sources = cmp.config.sources({
-    { name = "nvim_lsp" },
-    { name = "buffer" },
-    { name = "path" },
-    { name = "luasnip" },
-  }),
-})
 
 -- Editor configs
 local opt = vim.opt         -- short alias
@@ -396,11 +369,7 @@ vim.o.title = true
 vim.api.nvim_create_autocmd({"BufEnter", "DirChanged"}, {
   callback = function()
     local bpath = vim.api.nvim_buf_get_name(0)
-    local wpath = pkgmgr.workspace_root(bpath)
-
-    if wpath == nil then
-      wpath = vim.fn.getcwd()
-    end
+    local wpath = pkgmgr.cwd_root()
 
     vim.o.titlestring = string.format(
       "Nvim: %s - %s",
