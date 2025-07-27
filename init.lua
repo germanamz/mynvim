@@ -12,6 +12,10 @@ vim.opt.rtp:prepend(lazypath)
 require("lazy").setup({
   { "nvim-lua/plenary.nvim" },
   { "nvim-treesitter/nvim-treesitter", build = ":TSUpdate" },
+  { "nvim-treesitter/nvim-treesitter-textobjects" },
+  { "HiPhish/rainbow-delimiters.nvim" },
+  { "projekt0n/github-nvim-theme", priority = 1000 },
+  { "lewis6991/gitsigns.nvim", opts = {} },
   { "williamboman/mason.nvim", config = true },
   { "williamboman/mason-lspconfig.nvim" },
   { "neovim/nvim-lspconfig" },
@@ -98,6 +102,12 @@ require("lazy").setup({
   { "folke/neodev.nvim", opts = {} },
 })
 
+vim.cmd.colorscheme("github_light")
+
+-- Fix whitespace colors for github theme
+vim.api.nvim_set_hl(0, "Whitespace", { fg = "#d1d9e0" })
+vim.api.nvim_set_hl(0, "NonText", { fg = "#d1d9e0" })
+
 require("nvim-treesitter.configs").setup({
   ensure_installed = {
     "javascript",
@@ -116,9 +126,18 @@ require("nvim-treesitter.configs").setup({
     "go",
     "css",
     "cmake",
-    "asm"
+    "asm",
+    "markdown",
+    "markdown_inline",
+    "html",
+    "dockerfile",
+    "bash",
+    "regex"
   },
-  highlight = { enable = true },
+  highlight = { 
+    enable = true,
+    additional_vim_regex_highlighting = false,
+  },
   incremental_selection = {
     enable = true,
     keymaps = {
@@ -129,7 +148,62 @@ require("nvim-treesitter.configs").setup({
     },
   },
   indent = { enable = true },
+  textobjects = {
+    select = {
+      enable = true,
+      lookahead = true,
+      keymaps = {
+        ["af"] = "@function.outer",
+        ["if"] = "@function.inner",
+        ["ac"] = "@class.outer",
+        ["ic"] = "@class.inner",
+        ["aa"] = "@parameter.outer",
+        ["ia"] = "@parameter.inner",
+      },
+    },
+    move = {
+      enable = true,
+      set_jumps = true,
+      goto_next_start = {
+        ["]f"] = "@function.outer",
+        ["]c"] = "@class.outer",
+      },
+      goto_next_end = {
+        ["]F"] = "@function.outer",
+        ["]C"] = "@class.outer",
+      },
+      goto_previous_start = {
+        ["[f"] = "@function.outer",
+        ["[c"] = "@class.outer",
+      },
+      goto_previous_end = {
+        ["[F"] = "@function.outer",
+        ["[C"] = "@class.outer",
+      },
+    },
+  },
 })
+
+local rainbow_delimiters = require("rainbow-delimiters")
+vim.g.rainbow_delimiters = {
+  strategy = {
+    [''] = rainbow_delimiters.strategy['global'],
+    vim = rainbow_delimiters.strategy['local'],
+  },
+  query = {
+    [''] = 'rainbow-delimiters',
+    lua = 'rainbow-blocks',
+  },
+  highlight = {
+    'RainbowDelimiterRed',
+    'RainbowDelimiterYellow',
+    'RainbowDelimiterBlue',
+    'RainbowDelimiterOrange',
+    'RainbowDelimiterGreen',
+    'RainbowDelimiterViolet',
+    'RainbowDelimiterCyan',
+  },
+}
 
 local lsp_list = {
   "lua_ls",
@@ -154,7 +228,7 @@ local pkgmgr = require("pkgmgr") -- A custom script in ./lua folder
 local lsp = require("lspconfig")
 local util = require("lspconfig.util")
 local cwd_root = pkgmgr.cwd_root()
-local on_attach = function(_, bufnr)
+local on_attach = function(client, bufnr)
   local nmap = function(keys, func, desc)
     if desc then desc = "LSP: " .. desc end
     vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
@@ -162,6 +236,10 @@ local on_attach = function(_, bufnr)
   nmap("gd",  vim.lsp.buf.definition, "Go to Definition")
   nmap("K",   vim.lsp.buf.hover, "Hover Docs")
   nmap("<F2>",vim.lsp.buf.rename, "Rename Symbol")
+  
+  if client.server_capabilities.semanticTokensProvider then
+    vim.lsp.semantic_tokens.start(bufnr, client.id)
+  end
 end
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
