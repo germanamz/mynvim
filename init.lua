@@ -132,7 +132,8 @@ require("nvim-treesitter.configs").setup({
     "html",
     "dockerfile",
     "bash",
-    "regex"
+    "regex",
+    "prisma"
   },
   highlight = { 
     enable = true,
@@ -435,6 +436,7 @@ require("conform").setup({
     cpp        = { "clang_format" },
     python     = { "black", "isort" },
     zig        = { "zigfmt" },
+    prisma     = { "prisma" },
   },
   formatters = {
     prettier_or_prettierd = {
