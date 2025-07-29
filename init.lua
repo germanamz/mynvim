@@ -534,66 +534,15 @@ cmp.setup({
 keybind_docs.document_keymap('i', '<C-Space>', 'Trigger completion', 'Completion')
 keybind_docs.document_keymap('i', '<CR>', 'Confirm completion', 'Completion')
 
--- Helper function to detect linting setup
-local function get_js_linter(filename)
-  local util = require("lspconfig.util")
-  
-  -- Check if ESLint config exists AND eslint is available
-  if util.root_pattern(
-    ".eslintrc",
-    ".eslintrc.js",
-    ".eslintrc.cjs",
-    ".eslintrc.json",
-    ".eslintrc.yaml",
-    ".eslintrc.yml",
-    "eslint.config.js",
-    "eslint.config.mjs",
-    "eslint.config.cjs",
-    "eslint.config.ts",
-    "eslint.config.mts",
-    "eslint.config.cts"
-  )(filename) then
-    -- Only use eslint if it's actually available
-    local eslint_cmd = pkgmgr.prefer_local("eslint_d", filename)
-    if vim.fn.executable(eslint_cmd) == 1 then
-      return "eslint_d_fix"
-    end
-  end
-  
-  -- Use oxlint as fallback (check if available)
-  local oxlint_cmd = pkgmgr.prefer_local("oxlint", filename)
-  if vim.fn.executable(oxlint_cmd) == 1 then
-    return "oxlint_fix"
-  end
-  
-  -- Default to no linting fix
-  return nil
-end
 
 -- Formatting and Linting
 require("conform").setup({
   notify_on_error = false,
   formatters_by_ft = {
-    javascript = function(bufnr)
-      local filename = vim.api.nvim_buf_get_name(bufnr)
-      local linter = get_js_linter(filename)
-      return linter and { "prettier_or_prettierd", linter } or { "prettier_or_prettierd" }
-    end,
-    typescript = function(bufnr)
-      local filename = vim.api.nvim_buf_get_name(bufnr)
-      local linter = get_js_linter(filename)
-      return linter and { "prettier_or_prettierd", linter } or { "prettier_or_prettierd" }
-    end,
-    javascriptreact = function(bufnr)
-      local filename = vim.api.nvim_buf_get_name(bufnr)
-      local linter = get_js_linter(filename)
-      return linter and { "prettier_or_prettierd", linter } or { "prettier_or_prettierd" }
-    end,
-    typescriptreact = function(bufnr)
-      local filename = vim.api.nvim_buf_get_name(bufnr)
-      local linter = get_js_linter(filename)
-      return linter and { "prettier_or_prettierd", linter } or { "prettier_or_prettierd" }
-    end,
+    javascript = { "prettier_or_prettierd" },
+    typescript = { "prettier_or_prettierd" },
+    javascriptreact = { "prettier_or_prettierd" },
+    typescriptreact = { "prettier_or_prettierd" },
     -- keep your others:
     rust       = { "rustfmt" },
     c          = { "clang_format" },
@@ -620,14 +569,6 @@ require("conform").setup({
       args = { "--fix-to-stdout", "--stdin", "--stdin-filename", "$FILENAME" },
       stdin = true,
       exit_codes = { 0, 1 }, -- ESLint returns 1 when it finds problems
-    },
-    oxlint_fix = {
-      command = function(ctx)
-        return pkgmgr.prefer_local("oxlint", ctx.filename)
-      end,
-      args = { "--fix", "--stdin-filename", "$FILENAME" },
-      stdin = true,
-      exit_codes = { 0, 1 },
     },
   },
 })
