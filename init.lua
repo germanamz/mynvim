@@ -399,18 +399,11 @@ lsp.ts_ls.setup{
   }
 }
 
--- eslint goodies
-lsp.eslint.setup {
-  on_attach = function(client, bufnr)
-    pkgmgr.add_package_bin_to_path(vim.api.nvim_buf_get_name(bufnr))
-    on_attach(client, bufnr)
-  end,
-  capabilities = capabilities,
-  root_dir = function(fname)
-    -- If you have a central ESLint config at workspace root, this will find it.
-    -- Otherwise it will stop at the package config.
-    return util.root_pattern(
-      -- ESLint config files
+-- eslint goodies - only setup if ESLint is available
+local function setup_eslint_if_available()
+  return function(fname) 
+    -- Check if ESLint config exists
+    local eslint_root = util.root_pattern(
       ".eslintrc",
       ".eslintrc.js",
       ".eslintrc.cjs",
@@ -424,8 +417,29 @@ lsp.eslint.setup {
       "eslint.config.mts",
       "eslint.config.cts"
     )(fname)
-    or pkgmgr.cwd_root()
+    
+    if not eslint_root then
+      return nil
+    end
+    
+    -- Check if ESLint is actually available
+    pkgmgr.add_package_bin_to_path(fname)
+    local eslint_cmd = pkgmgr.prefer_local("eslint", fname)
+    if vim.fn.executable(eslint_cmd) == 0 then
+      return nil
+    end
+    
+    return eslint_root
+  end
+end
+
+lsp.eslint.setup {
+  on_attach = function(client, bufnr)
+    pkgmgr.add_package_bin_to_path(vim.api.nvim_buf_get_name(bufnr))
+    on_attach(client, bufnr)
   end,
+  capabilities = capabilities,
+  root_dir = setup_eslint_if_available(),
 }
 
 -- Use oxlint if no eslint present
@@ -520,14 +534,66 @@ cmp.setup({
 keybind_docs.document_keymap('i', '<C-Space>', 'Trigger completion', 'Completion')
 keybind_docs.document_keymap('i', '<CR>', 'Confirm completion', 'Completion')
 
+-- Helper function to detect linting setup
+local function get_js_linter(filename)
+  local util = require("lspconfig.util")
+  
+  -- Check if ESLint config exists AND eslint is available
+  if util.root_pattern(
+    ".eslintrc",
+    ".eslintrc.js",
+    ".eslintrc.cjs",
+    ".eslintrc.json",
+    ".eslintrc.yaml",
+    ".eslintrc.yml",
+    "eslint.config.js",
+    "eslint.config.mjs",
+    "eslint.config.cjs",
+    "eslint.config.ts",
+    "eslint.config.mts",
+    "eslint.config.cts"
+  )(filename) then
+    -- Only use eslint if it's actually available
+    local eslint_cmd = pkgmgr.prefer_local("eslint_d", filename)
+    if vim.fn.executable(eslint_cmd) == 1 then
+      return "eslint_d_fix"
+    end
+  end
+  
+  -- Use oxlint as fallback (check if available)
+  local oxlint_cmd = pkgmgr.prefer_local("oxlint", filename)
+  if vim.fn.executable(oxlint_cmd) == 1 then
+    return "oxlint_fix"
+  end
+  
+  -- Default to no linting fix
+  return nil
+end
+
 -- Formatting and Linting
 require("conform").setup({
   notify_on_error = false,
   formatters_by_ft = {
-    javascript = { "prettier_or_prettierd", "eslint_d_fix" },
-    typescript = { "prettier_or_prettierd", "eslint_d_fix" },
-    javascriptreact = { "prettier_or_prettierd", "eslint_d_fix" },
-    typescriptreact = { "prettier_or_prettierd", "eslint_d_fix" },
+    javascript = function(bufnr)
+      local filename = vim.api.nvim_buf_get_name(bufnr)
+      local linter = get_js_linter(filename)
+      return linter and { "prettier_or_prettierd", linter } or { "prettier_or_prettierd" }
+    end,
+    typescript = function(bufnr)
+      local filename = vim.api.nvim_buf_get_name(bufnr)
+      local linter = get_js_linter(filename)
+      return linter and { "prettier_or_prettierd", linter } or { "prettier_or_prettierd" }
+    end,
+    javascriptreact = function(bufnr)
+      local filename = vim.api.nvim_buf_get_name(bufnr)
+      local linter = get_js_linter(filename)
+      return linter and { "prettier_or_prettierd", linter } or { "prettier_or_prettierd" }
+    end,
+    typescriptreact = function(bufnr)
+      local filename = vim.api.nvim_buf_get_name(bufnr)
+      local linter = get_js_linter(filename)
+      return linter and { "prettier_or_prettierd", linter } or { "prettier_or_prettierd" }
+    end,
     -- keep your others:
     rust       = { "rustfmt" },
     c          = { "clang_format" },
@@ -555,8 +621,73 @@ require("conform").setup({
       stdin = true,
       exit_codes = { 0, 1 }, -- ESLint returns 1 when it finds problems
     },
+    oxlint_fix = {
+      command = function(ctx)
+        return pkgmgr.prefer_local("oxlint", ctx.filename)
+      end,
+      args = { "--fix", "--stdin-filename", "$FILENAME" },
+      stdin = true,
+      exit_codes = { 0, 1 },
+    },
   },
 })
+-- Setup nvim-lint with dynamic linter assignment
+local lint = require("lint")
+
+-- Set default linters (will be overridden dynamically)  
+lint.linters_by_ft = {
+  javascript = { "oxlint" },
+  typescript = { "oxlint" },
+  javascriptreact = { "oxlint" },
+  typescriptreact = { "oxlint" },
+}
+
+-- Helper function to dynamically set linter
+local function set_dynamic_linter()
+  local filename = vim.api.nvim_buf_get_name(0)
+  local filetype = vim.bo.filetype
+  local util = require("lspconfig.util")
+  
+  -- Only handle JS/TS files
+  if not vim.tbl_contains({"javascript", "typescript", "javascriptreact", "typescriptreact"}, filetype) then
+    return
+  end
+  
+  local selected_linters = {}
+  
+  -- Check if ESLint config exists AND eslint_d is available
+  if util.root_pattern(
+    ".eslintrc", ".eslintrc.js", ".eslintrc.cjs", ".eslintrc.json",
+    ".eslintrc.yaml", ".eslintrc.yml", "eslint.config.js",
+    "eslint.config.mjs", "eslint.config.cjs", "eslint.config.ts",
+    "eslint.config.mts", "eslint.config.cts"
+  )(filename) then
+    local eslint_cmd = pkgmgr.prefer_local("eslint_d", filename)
+    if vim.fn.executable(eslint_cmd) == 1 then
+      selected_linters = { "eslint_d" }
+    end
+  end
+  
+  -- Use oxlint as fallback if available and no eslint
+  if #selected_linters == 0 then
+    local oxlint_cmd = pkgmgr.prefer_local("oxlint", filename)
+    if vim.fn.executable(oxlint_cmd) == 1 then
+      selected_linters = { "oxlint" }
+    end
+  end
+  
+  -- Update the linter for this filetype
+  lint.linters_by_ft[filetype] = selected_linters
+end
+
+-- Auto-lint on save and when entering buffer
+vim.api.nvim_create_autocmd({ "BufWritePost", "BufEnter" }, {
+  callback = function()
+    set_dynamic_linter()
+    require("lint").try_lint()
+  end,
+})
+
 -- auto‑format on save
 vim.api.nvim_create_autocmd("BufWritePre", {
   pattern = "*",
