@@ -15,7 +15,39 @@ require("lazy").setup({
   { "nvim-treesitter/nvim-treesitter-textobjects" },
   { "HiPhish/rainbow-delimiters.nvim" },
   { "projekt0n/github-nvim-theme", priority = 1000 },
-  { "lewis6991/gitsigns.nvim", opts = {} },
+  { 
+    "lewis6991/gitsigns.nvim", 
+    config = function()
+      require('gitsigns').setup({
+        on_attach = function(bufnr)
+          local gs = package.loaded.gitsigns
+          
+          local function map(mode, l, r, opts)
+            opts = opts or {}
+            opts.buffer = bufnr
+            vim.keymap.set(mode, l, r, opts)
+          end
+          
+          -- Navigation
+          map('n', ']g', function()
+            if vim.wo.diff then return ']c' end
+            vim.schedule(function() gs.next_hunk() end)
+            return '<Ignore>'
+          end, {expr=true, desc = 'Next git hunk'})
+          
+          map('n', '[g', function()
+            if vim.wo.diff then return '[c' end
+            vim.schedule(function() gs.prev_hunk() end)
+            return '<Ignore>'
+          end, {expr=true, desc = 'Previous git hunk'})
+          
+          -- Actions
+          map('n', '<leader>gp', gs.preview_hunk, { desc = 'Preview git hunk' })
+          map('n', '<leader>gd', gs.diffthis, { desc = 'Diff this buffer' })
+        end
+      })
+    end
+  },
   { "williamboman/mason.nvim", config = true },
   { "williamboman/mason-lspconfig.nvim" },
   { "neovim/nvim-lspconfig" },
@@ -73,9 +105,10 @@ require("lazy").setup({
       {
         "<leader>ff",
         function()
-          require("telescope.builtin").git_files({
-            show_untracked = true,
-            use_git_root = true,
+          require("telescope.builtin").find_files({
+            find_command = { "sh", "-c", "git ls-files --exclude-standard --others --cached; find . -name '.env*' -type f" },
+            follow = true,
+            hidden = true,
           })
         end,
         desc = "Find git files (tracked + untracked)",
