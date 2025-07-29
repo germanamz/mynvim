@@ -124,6 +124,17 @@ require("lazy").setup({
       { "<leader>fb", "<cmd>Telescope buffers<cr>",    desc = "Buffers" },
       { "<leader>fh", "<cmd>Telescope help_tags<cr>",  desc = "Help tags" },
       { "<leader>fe", "<cmd>Telescope file_browser<cr>", desc = "File browser" },
+      { 
+        "<leader>fE", 
+        function() 
+          require("telescope").extensions.file_browser.file_browser({
+            path = vim.fn.expand('%:p:h'),
+            cwd = vim.fn.getcwd(),
+            respect_gitignore = false,
+          })
+        end, 
+        desc = "File browser (current buffer dir)" 
+      },
     },
   },
 
