@@ -9,6 +9,8 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+local keybind_docs = require("keybind_docs")
+
 require("lazy").setup({
   { "nvim-lua/plenary.nvim" },
   { "nvim-treesitter/nvim-treesitter", build = ":TSUpdate" },
@@ -44,6 +46,12 @@ require("lazy").setup({
           -- Actions
           map('n', '<leader>gp', gs.preview_hunk, { desc = 'Preview git hunk' })
           map('n', '<leader>gd', gs.diffthis, { desc = 'Diff this buffer' })
+          
+          -- Document these keybindings
+          keybind_docs.document_keymap('n', ']g', 'Next git hunk', 'Git Signs')
+          keybind_docs.document_keymap('n', '[g', 'Previous git hunk', 'Git Signs')
+          keybind_docs.document_keymap('n', '<leader>gp', 'Preview git hunk', 'Git Signs')
+          keybind_docs.document_keymap('n', '<leader>gd', 'Diff this buffer', 'Git Signs')
         end
       })
     end
@@ -136,6 +144,19 @@ require("lazy").setup({
         desc = "File browser (current buffer dir)" 
       },
     },
+    init = function()
+      -- Document Telescope keybindings
+      keybind_docs.document_keymap('n', '<leader>ff', 'Find git files (tracked + untracked + .env files)', 'Telescope')
+      keybind_docs.document_keymap('n', '<leader>ft', 'Find git files (tracked only)', 'Telescope')
+      keybind_docs.document_keymap('n', '<leader>fa', 'Find all files', 'Telescope')
+      keybind_docs.document_keymap('n', '<leader>fg', 'Live grep', 'Telescope')
+      keybind_docs.document_keymap('n', '<leader>fb', 'Buffers', 'Telescope')
+      keybind_docs.document_keymap('n', '<leader>fh', 'Help tags', 'Telescope')
+      keybind_docs.document_keymap('n', '<leader>fe', 'File browser', 'Telescope')
+      keybind_docs.document_keymap('n', '<leader>fE', 'File browser (current buffer directory)', 'Telescope')
+      keybind_docs.document_keymap('i', '<C-k>', 'Move selection up', 'Telescope Internal Mappings')
+      keybind_docs.document_keymap('i', '<C-j>', 'Move selection down', 'Telescope Internal Mappings')
+    end,
   },
 
   {
@@ -229,6 +250,26 @@ require("nvim-treesitter.configs").setup({
   },
 })
 
+-- Document treesitter text object keybindings
+keybind_docs.document_keymap('x', 'af', 'Select function (outer)', 'Treesitter Text Objects')
+keybind_docs.document_keymap('x', 'if', 'Select function (inner)', 'Treesitter Text Objects')
+keybind_docs.document_keymap('x', 'ac', 'Select class (outer)', 'Treesitter Text Objects')
+keybind_docs.document_keymap('x', 'ic', 'Select class (inner)', 'Treesitter Text Objects')
+keybind_docs.document_keymap('x', 'aa', 'Select parameter (outer)', 'Treesitter Text Objects')
+keybind_docs.document_keymap('x', 'ia', 'Select parameter (inner)', 'Treesitter Text Objects')
+keybind_docs.document_keymap('n', ']f', 'Go to next function start', 'Treesitter Text Objects')
+keybind_docs.document_keymap('n', ']c', 'Go to next class start', 'Treesitter Text Objects')
+keybind_docs.document_keymap('n', ']F', 'Go to next function end', 'Treesitter Text Objects')
+keybind_docs.document_keymap('n', ']C', 'Go to next class end', 'Treesitter Text Objects')
+keybind_docs.document_keymap('n', '[f', 'Go to previous function start', 'Treesitter Text Objects')
+keybind_docs.document_keymap('n', '[c', 'Go to previous class start', 'Treesitter Text Objects')
+keybind_docs.document_keymap('n', '[F', 'Go to previous function end', 'Treesitter Text Objects')
+keybind_docs.document_keymap('n', '[C', 'Go to previous class end', 'Treesitter Text Objects')
+keybind_docs.document_keymap('n', '<Leader>ss', 'Initialize selection', 'Treesitter Text Objects')
+keybind_docs.document_keymap('n', '<Leader>si', 'Increment node selection', 'Treesitter Text Objects')
+keybind_docs.document_keymap('n', '<Leader>sc', 'Increment scope selection', 'Treesitter Text Objects')
+keybind_docs.document_keymap('n', '<Leader>sd', 'Decrement node selection', 'Treesitter Text Objects')
+
 local rainbow_delimiters = require("rainbow-delimiters")
 vim.g.rainbow_delimiters = {
   strategy = {
@@ -281,6 +322,11 @@ local on_attach = function(client, bufnr)
   nmap("gd",  vim.lsp.buf.definition, "Go to Definition")
   nmap("K",   vim.lsp.buf.hover, "Hover Docs")
   nmap("<F2>",vim.lsp.buf.rename, "Rename Symbol")
+  
+  -- Document LSP keybindings
+  keybind_docs.document_keymap('n', 'gd', 'Go to definition', 'LSP')
+  keybind_docs.document_keymap('n', 'K', 'Hover documentation', 'LSP')
+  keybind_docs.document_keymap('n', '<F2>', 'Rename symbol', 'LSP')
   
   if client.server_capabilities.semanticTokensProvider then
     vim.lsp.semantic_tokens.start(bufnr, client.id)
@@ -439,6 +485,11 @@ vim.keymap.set(
 vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, { desc = "Prev diagnostic" })
 vim.keymap.set("n", "]d", vim.diagnostic.goto_next, { desc = "Next diagnostic" })
 
+-- Document diagnostic keybindings
+keybind_docs.document_keymap('n', '<leader>e', 'Show diagnostic message for current line', 'Diagnostics')
+keybind_docs.document_keymap('n', '[d', 'Previous diagnostic', 'Diagnostics')
+keybind_docs.document_keymap('n', ']d', 'Next diagnostic', 'Diagnostics')
+
 -- nvim-cmp: autocompletion
 local cmp = require("cmp")
 
@@ -465,6 +516,9 @@ cmp.setup({
   },
 })
 
+-- Document completion keybindings
+keybind_docs.document_keymap('i', '<C-Space>', 'Trigger completion', 'Completion')
+keybind_docs.document_keymap('i', '<CR>', 'Confirm completion', 'Completion')
 
 -- Formatting and Linting
 require("conform").setup({
@@ -524,6 +578,10 @@ opt.number         = true  -- absolute number on cursor line
 vim.keymap.set("v", "<Tab>",   ">gv")
 vim.keymap.set("v", "<S-Tab>", "<gv")
 
+-- Document visual mode keybindings
+keybind_docs.document_keymap('v', '<Tab>', 'Indent selection', 'Visual Mode')
+keybind_docs.document_keymap('v', '<S-Tab>', 'Dedent selection', 'Visual Mode')
+
 -- Whitespaces
 vim.opt.list = true
 vim.opt.listchars = {
@@ -548,5 +606,16 @@ vim.api.nvim_create_autocmd({"BufEnter", "DirChanged"}, {
       vim.fn.fnamemodify(wpath, ":t"),
       utilPath.relative(bpath, wpath)
     )
+  end,
+})
+
+-- Generate help tags for custom documentation
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function()
+    keybind_docs.generate_keybinding_docs()
+    local doc_path = vim.fn.stdpath("config") .. "/doc"
+    if vim.fn.isdirectory(doc_path) == 1 then
+      vim.cmd("helptags " .. doc_path)
+    end
   end,
 })
