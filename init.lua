@@ -645,6 +645,7 @@ opt.expandtab   = true       -- use spaces instead of <Tab>
 opt.smartindent = true       -- smart auto‑indent
 opt.number         = true  -- absolute number on cursor line
 -- opt.relativenumber = true  -- relative numbers elsewhere
+opt.fixendofline = true      -- ensure final newline is preserved
 
 -- Indent / dedent with Tab in visual mode
 vim.keymap.set("v", "<Tab>",   ">gv")
