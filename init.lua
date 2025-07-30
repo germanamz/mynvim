@@ -320,11 +320,17 @@ local on_attach = function(client, bufnr)
     vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
   end
   nmap("gd",  vim.lsp.buf.definition, "Go to Definition")
+  nmap("gD",  vim.lsp.buf.declaration, "Go to Declaration")
+  nmap("gi",  vim.lsp.buf.implementation, "Go to Implementation")
+  nmap("gr",  vim.lsp.buf.references, "Go to References")
   nmap("K",   vim.lsp.buf.hover, "Hover Docs")
   nmap("<F2>",vim.lsp.buf.rename, "Rename Symbol")
   
   -- Document LSP keybindings
   keybind_docs.document_keymap('n', 'gd', 'Go to definition', 'LSP')
+  keybind_docs.document_keymap('n', 'gD', 'Go to declaration', 'LSP')
+  keybind_docs.document_keymap('n', 'gi', 'Go to implementation', 'LSP')
+  keybind_docs.document_keymap('n', 'gr', 'Go to references', 'LSP')
   keybind_docs.document_keymap('n', 'K', 'Hover documentation', 'LSP')
   keybind_docs.document_keymap('n', '<F2>', 'Rename symbol', 'LSP')
   
