@@ -1,7 +1,6 @@
 -- lua/pkgmgr.lua
 local M = {}
 
-local util = require("lspconfig.util")
 local uv = vim.loop
 
 -- Files that identify the *workspace* root
@@ -37,11 +36,13 @@ M.package_root_patterns = {
 
 -- Return the nearest package root for a file
 function M.package_root(fname)
+  local util = require("lspconfig.util")
   return util.root_pattern(unpack(M.package_root_patterns))(fname)
 end
 
 -- Return the pnpm workspace root (or git root as fallback)
 function M.workspace_root(fname)
+  local util = require("lspconfig.util")
   return util.root_pattern(unpack(M.workspace_root_patterns))(fname)
 end
 
@@ -78,6 +79,7 @@ end
 
 
 function M.cwd_root()
+  local util = require("lspconfig.util")
   local cwd = vim.fn.getcwd()
   return M.workspace_root(cwd)
     or util.find_git_ancestor(cwd)
