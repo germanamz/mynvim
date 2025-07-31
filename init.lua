@@ -165,6 +165,55 @@ require("lazy").setup({
   },
   { "hrsh7th/cmp-buffer" },
   { "folke/neodev.nvim", opts = {} },
+  {
+    "nvim-tree/nvim-tree.lua",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    lazy = false,
+    config = function()
+      require("nvim-tree").setup({
+        disable_netrw = true,
+        hijack_netrw = true,
+        view = {
+          side = "left",
+          width = 30,
+        },
+        renderer = {
+          group_empty = true,
+          highlight_git = true,
+          icons = {
+            show = {
+              git = true,
+              folder = true,
+              file = true,
+              folder_arrow = true,
+            },
+          },
+        },
+        filters = {
+          dotfiles = false,
+        },
+        git = {
+          enable = true,
+          ignore = false,
+        },
+      })
+      
+      -- Auto-open nvim-tree on startup
+      vim.api.nvim_create_autocmd("VimEnter", {
+        callback = function()
+          require("nvim-tree.api").tree.open()
+        end
+      })
+    end,
+    keys = {
+      { "<leader>tt", "<cmd>NvimTreeToggle<cr>", desc = "Toggle file tree" },
+      { "<leader>tf", "<cmd>NvimTreeFindFile<cr>", desc = "Find current file in tree" },
+    },
+    init = function()
+      keybind_docs.document_keymap('n', '<leader>tt', 'Toggle file tree', 'NvimTree')
+      keybind_docs.document_keymap('n', '<leader>tf', 'Find current file in tree', 'NvimTree')
+    end,
+  },
 })
 
 vim.cmd.colorscheme("github_light")
