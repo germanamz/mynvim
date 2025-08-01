@@ -67,10 +67,19 @@ end
 function M.setup()
   vim.opt.tabline = '%!v:lua.custom_tabline()'
 
-  vim.api.nvim_create_autocmd({"BufEnter", "BufNew", "BufRead", "BufNewFile"}, {
+  -- Only redraw when buffer display actually changes
+  vim.api.nvim_create_autocmd({"BufEnter", "BufDelete", "BufWipeout"}, {
     group = vim.api.nvim_create_augroup("RedrawTabline", { clear = true }),
-    callback = function()
-      vim.cmd("redrawtabline")
+    callback = function(event)
+      -- Skip nvim-tree and other special buffers
+      local buftype = vim.api.nvim_buf_get_option(event.buf, 'buftype')
+      local bufname = vim.api.nvim_buf_get_name(event.buf)
+      
+      if buftype == '' and not bufname:match('NvimTree') then
+        vim.schedule(function()
+          vim.cmd("redrawtabline")
+        end)
+      end
     end,
   })
 end
