@@ -11,6 +11,7 @@ function M.setup()
     defaults = {
       prompt_prefix = "🔭 ",
       selection_caret = " ",
+      initial_mode = "normal",
       mappings = {
         i = { 
           ["<C-k>"] = actions.move_selection_previous,
