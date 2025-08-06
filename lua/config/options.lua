@@ -13,7 +13,8 @@ opt.number = true
 -- opt.relativenumber = true  -- uncomment if you want relative numbers
 
 -- File handling
-opt.fixendofline = true
+opt.fixendofline = false  -- Don't automatically fix end of line
+opt.endofline = true      -- Ensure files end with a newline
 
 -- Completion
 opt.completeopt = { "menu", "menuone", "noselect" }
