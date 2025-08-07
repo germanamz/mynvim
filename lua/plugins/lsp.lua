@@ -31,6 +31,7 @@ local function on_attach(client, bufnr)
   nmap("gr", vim.lsp.buf.references, "Go to References")
   nmap("K", vim.lsp.buf.hover, "Hover Docs")
   nmap("<F2>", vim.lsp.buf.rename, "Rename Symbol")
+  nmap("<C-.>", vim.lsp.buf.code_action, "Show Code Actions")
   
   -- Document LSP keybindings
   keybind_docs.document_keymap('n', 'gd', 'Go to definition', 'LSP')
@@ -39,6 +40,7 @@ local function on_attach(client, bufnr)
   keybind_docs.document_keymap('n', 'gr', 'Go to references', 'LSP')
   keybind_docs.document_keymap('n', 'K', 'Hover documentation', 'LSP')
   keybind_docs.document_keymap('n', '<F2>', 'Rename symbol', 'LSP')
+  keybind_docs.document_keymap('n', '<C-.>', 'Show code actions', 'LSP')
   
   if client.server_capabilities.semanticTokensProvider then
     vim.lsp.semantic_tokens.start(bufnr, client.id)
