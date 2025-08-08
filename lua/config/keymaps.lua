@@ -23,6 +23,13 @@ vim.keymap.set("n", "<leader>bb", function()
 end, { desc = "Switch to buffer by number (use count or prompt)" })
 
 vim.keymap.set("n", "<leader>bd", require('util.buffer').smart_delete, { desc = "Delete current buffer (go to previous)" })
+vim.keymap.set("n", "<leader>bD", function()
+  vim.ui.input({ prompt = "Close all buffers? [y/N]: " }, function(input)
+    if input and (input:lower() == "y" or input:lower() == "yes") then
+      require('util.buffer').close_all()
+    end
+  end)
+end, { desc = "Close all buffers (with confirmation)" })
 
 -- Diagnostic keymaps
 vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float, { desc = "Diagnostic: show line message" })
@@ -34,6 +41,7 @@ keybind_docs.document_keymap('v', '<Tab>', 'Indent selection', 'Visual Mode')
 keybind_docs.document_keymap('v', '<S-Tab>', 'Dedent selection', 'Visual Mode')
 keybind_docs.document_keymap('n', '<leader>bb', 'Switch to buffer by number (5<leader>bb or prompts)', 'Buffer Navigation')
 keybind_docs.document_keymap('n', '<leader>bd', 'Delete current buffer (go to previous)', 'Buffer Navigation')
+keybind_docs.document_keymap('n', '<leader>bD', 'Close all buffers (with confirmation)', 'Buffer Navigation')
 keybind_docs.document_keymap('n', '<leader>e', 'Show diagnostic message for current line', 'Diagnostics')
 keybind_docs.document_keymap('n', '[d', 'Previous diagnostic', 'Diagnostics')
 keybind_docs.document_keymap('n', ']d', 'Next diagnostic', 'Diagnostics')

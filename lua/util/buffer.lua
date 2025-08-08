@@ -64,4 +64,19 @@ function M.smart_delete()
   vim.cmd("bdelete " .. current_buf)
 end
 
+-- Close all buffers
+function M.close_all()
+  local valid_bufs = M.get_valid_buffers()
+  
+  -- If no valid buffers, nothing to do
+  if #valid_bufs == 0 then
+    return
+  end
+  
+  -- Close all valid buffers
+  for _, buf in ipairs(valid_bufs) do
+    vim.cmd("bdelete " .. buf)
+  end
+end
+
 return M
